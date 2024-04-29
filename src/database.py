@@ -65,17 +65,17 @@ updated_at=Annotated[datetime,mapped_column(server_default=text("TIMEZONE('utc',
 class User(Base):
     __tablename__ = "user"
 
-    id=Column(Integer,primary_key=True)
-    login= Column( String, nullable=False)
-    pasword=Column( String, nullable=False)
-    registered_at= Column( TIMESTAMP,nullable=False,default=datetime.utcnow )
-    check= Column( Float,nullable=False,default=0)
+    # id=Column(Integer,primary_key=True)
+    # login= Column( String, nullable=False)
+    # pasword=Column( String, nullable=False)
+    # registered_at= Column( TIMESTAMP,nullable=False,default=datetime.utcnow )
+    # check= Column( Float,nullable=False,default=0)
 
-    # id:Mapped[intpk]
-    # login: Mapped[str]
-    # pasword: Mapped[str]
-    # registered_at: Mapped[created_at] 
-    # check: Mapped[float]=mapped_column(default=0)
+    id:Mapped[intpk]
+    login: Mapped[str]
+    pasword: Mapped[str]
+    registered_at: Mapped[created_at] 
+    check: Mapped[float]=mapped_column(default=0)
 
     _models:  Mapped[list["Model"]]=relationship("_user")
     _transactions: Mapped[list["Transaction"]] =relationship(back_populates="_user")
@@ -85,25 +85,25 @@ class UserAsset (Base):
     '''промежуточная таблица many to many'''
     __tablename__ = "user_asset"
 
-    user_id=Column(Integer,ForeignKey('user.id',ondelete="CASCADE"),primary_key=True, nullable=False)
-    assets_id=Column(Integer,ForeignKey('asset.id',ondelete="CASCADE"),primary_key=True, nullable=False)
+    # user_id=Column(Integer,ForeignKey('user.id',ondelete="CASCADE"),primary_key=True, nullable=False)
+    # assets_id=Column(Integer,ForeignKey('asset.id',ondelete="CASCADE"),primary_key=True, nullable=False)
 
-    # user_id: Mapped[int] = mapped_column(ForeignKey('user.id',ondelete="CASCADE"),primary_key=True)
-    # assets_id: Mapped[int]= mapped_column(ForeignKey('asset.id',ondelete="CASCADE"),primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('user.id',ondelete="CASCADE"),primary_key=True)
+    assets_id: Mapped[int]= mapped_column(ForeignKey('asset.id',ondelete="CASCADE"),primary_key=True)
 
 class Asset (Base):
     __tablename__ = "asset"
-    # id :Mapped[intpk]
-    # name :Mapped[str]
-    # asset_type:Mapped[str]#?
-    # created_at:Mapped[created_at]
-    # created_assets_at:Mapped[datetime]
+    id :Mapped[intpk]
+    name :Mapped[str]
+    asset_type:Mapped[str]#?
+    created_at:Mapped[created_at]
+    created_assets_at:Mapped[datetime]
 
-    id =Column(Integer,primary_key=True)
-    name =Column(String, nullable=False)
-    asset_type=Column(String, nullable=False)#?
-    created_at=Column( TIMESTAMP, nullable=False,default=datetime.utcnow )
-    created_assets_at=Column( TIMESTAMP, nullable=False )
+    # id =Column(Integer,primary_key=True)
+    # name =Column(String, nullable=False)
+    # asset_type=Column(String, nullable=False)#?
+    # created_at=Column( TIMESTAMP, nullable=False,default=datetime.utcnow )
+    # created_assets_at=Column( TIMESTAMP, nullable=False )
 
     _users: Mapped[list["User"]]=relationship(back_populates="_assets",secondary="user_asset")
     _models:  Mapped[list["Model"]]=relationship(back_populates="_asset")
@@ -113,44 +113,44 @@ class Asset (Base):
 
 class Model(Base):
     __tablename__ = "model"
-    # id:Mapped[intpk]
-    # name:Mapped[str]
-    # user_id :Mapped[int]=mapped_column(ForeignKey('user.id',ondelete="CASCADE"))
-    # asset_id :Mapped[int]=mapped_column(ForeignKey('asset.id',ondelete="CASCADE"))
-    # model_scale :Mapped[ModelScale]
-    # created_at :Mapped[created_at]
-    # architecture :Mapped[str]#json
+    id:Mapped[intpk]
+    name:Mapped[str]
+    user_id :Mapped[int]=mapped_column(ForeignKey('user.id',ondelete="CASCADE"))
+    asset_id :Mapped[int]=mapped_column(ForeignKey('asset.id',ondelete="CASCADE"))
+    model_scale :Mapped[ModelScale]
+    created_at :Mapped[created_at]
+    architecture :Mapped[str]#json
 
-    id=Column(Integer,primary_key=True)
-    name=Column(String, nullable=False)
-    user_id =Column(Integer,ForeignKey('user.id',ondelete="CASCADE"))
-    asset_id =Column(Integer,ForeignKey('asset.id',ondelete="CASCADE"))
-    model_scale =Column(String, nullable=False)#ModelScale
-    created_at =Column( TIMESTAMP, nullable=False,default=datetime.utcnow )
-    architecture =Column(String, nullable=False)#json
+    # id=Column(Integer,primary_key=True)
+    # name=Column(String, nullable=False)
+    # user_id =Column(Integer,ForeignKey('user.id',ondelete="CASCADE"))
+    # asset_id =Column(Integer,ForeignKey('asset.id',ondelete="CASCADE"))
+    # model_scale =Column(String, nullable=False)#ModelScale
+    # created_at =Column( TIMESTAMP, nullable=False,default=datetime.utcnow )
+    # architecture =Column(String, nullable=False)#json
 
     _user: Mapped[list["User"]] =relationship(back_populates="_models")
     _asset: Mapped[list["Asset"]] =relationship(back_populates="_models")
 
 class Transaction(Base): 
     __tablename__ = "transaction"
-    # id:Mapped[intpk]
-    # user_id :Mapped[int]=mapped_column(ForeignKey('user.id',ondelete="CASCADE"))
-    # asset_id :Mapped[int]=mapped_column(ForeignKey('asset.id',ondelete="CASCADE"))
-    # transaction_type:Mapped[TransactionType]
-    # quantity:Mapped[int]
-    # price:Mapped[int]
-    # balance:Mapped[int]
-    # created_at:Mapped[created_at]
+    id:Mapped[intpk]
+    user_id :Mapped[int]=mapped_column(ForeignKey('user.id',ondelete="CASCADE"))
+    asset_id :Mapped[int]=mapped_column(ForeignKey('asset.id',ondelete="CASCADE"))
+    transaction_type:Mapped[TransactionType]
+    quantity:Mapped[int]
+    price:Mapped[int]
+    balance:Mapped[int]
+    created_at:Mapped[created_at]
 
-    id=Column(Integer,primary_key=True)
-    user_id =Column(Integer,ForeignKey('user.id',ondelete="CASCADE"))
-    asset_id =Column(Integer,ForeignKey('asset.id',ondelete="CASCADE"))
-    transaction_type=Column(String, nullable=False)#TransactionType
-    quantity=Column(Integer, nullable=False)
-    price=Column(Integer, nullable=False)
-    balance=Column(Integer, nullable=False)
-    created_at =Column( TIMESTAMP, nullable=False,default=datetime.utcnow )
+    # id=Column(Integer,primary_key=True)
+    # user_id =Column(Integer,ForeignKey('user.id',ondelete="CASCADE"))
+    # asset_id =Column(Integer,ForeignKey('asset.id',ondelete="CASCADE"))
+    # transaction_type=Column(String, nullable=False)#TransactionType
+    # quantity=Column(Integer, nullable=False)
+    # price=Column(Integer, nullable=False)
+    # balance=Column(Integer, nullable=False)
+    # created_at =Column( TIMESTAMP, nullable=False,default=datetime.utcnow )
 
     _user: Mapped[list["User"]] =relationship(back_populates="_transactions")
     _asset: Mapped[list["Asset"]] =relationship(back_populates="_transactions")

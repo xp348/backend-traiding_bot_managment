@@ -1,8 +1,8 @@
 """add tables
 
-Revision ID: f8dbb82c3de0
-Revises: dc09829c4c52
-Create Date: 2024-04-27 15:58:30.782665
+Revision ID: b0222537156c
+Revises: 
+Create Date: 2024-04-27 16:23:36.539919
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'f8dbb82c3de0'
-down_revision: Union[str, None] = 'dc09829c4c52'
+revision: str = 'b0222537156c'
+down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -24,17 +24,25 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('asset_type', sa.String(), nullable=False),
-    sa.Column('created_at', sa.TIMESTAMP(), nullable=False),
-    sa.Column('created_assets_at', sa.TIMESTAMP(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
+    sa.Column('created_assets_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('login', sa.String(), nullable=False),
+    sa.Column('pasword', sa.String(), nullable=False),
+    sa.Column('registered_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
+    sa.Column('check', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('model',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('asset_id', sa.Integer(), nullable=True),
-    sa.Column('model_scale', sa.String(), nullable=False),
-    sa.Column('created_at', sa.TIMESTAMP(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('asset_id', sa.Integer(), nullable=False),
+    sa.Column('model_scale', sa.Enum('one_minute', 'five_minutes', 'ten_minutes', 'fifteen_minutes', 'thirty_minutes', 'hour', 'day', 'week', 'month', name='modelscale'), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
     sa.Column('architecture', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['asset_id'], ['asset.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
@@ -42,13 +50,13 @@ def upgrade() -> None:
     )
     op.create_table('transaction',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('asset_id', sa.Integer(), nullable=True),
-    sa.Column('transaction_type', sa.String(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('asset_id', sa.Integer(), nullable=False),
+    sa.Column('transaction_type', sa.Enum('buy', 'sell', name='transactiontype'), nullable=False),
     sa.Column('quantity', sa.Integer(), nullable=False),
     sa.Column('price', sa.Integer(), nullable=False),
     sa.Column('balance', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.TIMESTAMP(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
     sa.ForeignKeyConstraint(['asset_id'], ['asset.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
@@ -68,5 +76,6 @@ def downgrade() -> None:
     op.drop_table('user_asset')
     op.drop_table('transaction')
     op.drop_table('model')
+    op.drop_table('user')
     op.drop_table('asset')
     # ### end Alembic commands ###
