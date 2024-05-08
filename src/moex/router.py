@@ -1,16 +1,6 @@
 
-from datetime import  timedelta
-from typing import Annotated
-from typing_extensions import Doc
-
-from fastapi import APIRouter, Depends, HTTPException, Query,  status
-import requests
-from fastapi.security import  OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from fastapi import APIRouter,Query
 from .schemas import ResponseHistory
-# from src import database
-# from .service import
 from .MOEX_ISS import history
 
 
