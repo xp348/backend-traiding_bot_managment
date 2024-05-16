@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Union
 
 import requests
 from typing_extensions import Doc
@@ -8,12 +8,14 @@ from typing_extensions import Doc
 
 from typing import List, Dict, Any
 
+from .MOEX_ISS_schemas import ColumnsName, History, Metadata, Quotes
 
 
 
 
 
-def history(
+
+def get_quotes(
         start_date:Annotated[
             str,
             Doc("Start date for historical data (YYYY-MM-DD)"),
@@ -32,7 +34,7 @@ def history(
         board:str='TQBR',
         market:str='shares',
         engine:str='stock'
-        ):
+        )-> Union[Quotes, bool] :
     r"""
     Получить историю торгов для указанной бумаги на указанном режиме торгов за указанный интервал дат.
     """
@@ -47,7 +49,13 @@ def history(
         }
     response = requests.get(url, params=params)
     if response.status_code == 200:
-        # Получение данных из JSON-ответа
-        return response.json()
+        json_data = response.json()
+        history_data = History(
+            metadata=Metadata(**json_data['history']['metadata']),
+            columns=[ColumnsName(column) for column in json_data['history']['columns']],
+            data=json_data['history']['data']
+        )
+        quotes = Quotes(history=history_data)
+        return quotes
     else:
-       return "Ошибка при выполнении запроса"
+       False

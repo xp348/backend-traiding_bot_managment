@@ -14,8 +14,8 @@ from pydantic import BaseModel
 
 class MetadataItem(BaseModel):
     type:str
-    bytes:Optional[int]
-    max_size:Optional[int]
+    bytes:Optional[int]=None
+    max_size:Optional[int]=None
 
 class ColumnsName(Enum):
     TRADEDATE = "TRADEDATE"
@@ -25,12 +25,18 @@ class ColumnsName(Enum):
     LOW = "LOW"
     VOLUME = "VOLUME"
    
-
+class Metadata (BaseModel):
+    TRADEDATE :Optional[MetadataItem]=None
+    OPEN :Optional[MetadataItem]=None
+    CLOSE:Optional[MetadataItem]=None
+    HIGH :Optional[MetadataItem]=None
+    LOW :Optional[MetadataItem]=None
+    VOLUME :Optional[MetadataItem]=None
 
 class History(BaseModel):
-    metadata:Dict[ColumnsName,MetadataItem]
-    columns: List[ColumnsName]
-    data: List[List[Union[str, float, int]]]
+    metadata:Metadata
+    columns: List[ColumnsName]=[]
+    data: List[List[Union[str, float, int]]]=[]
 
-class ResponseHistory(BaseModel):
+class Quotes(BaseModel):
     history: History
