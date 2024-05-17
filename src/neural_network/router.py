@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from core.NeuralNetwork.NeuralNetwork import NeuralNetwork
 from core.requests.MOEX_ISS import get_quotes
 from core.requests.MOEX_ISS_schemas import Quotes
+from .service import data_conversion
 
 from .schemas import  Settings
 
@@ -47,18 +48,23 @@ async def patch_bot(settings: Settings):
     result:Quotes| bool=get_quotes(settings.params.treningDate.start,settings.params.treningDate.end,security)
     if result==False:
         raise HTTPException(status_code=400, detail="Ошибка парсинга данных для обучения")
-    treningDate= result.history.data
+    treningDate=data_conversion(result.history.data) 
     
     result:Quotes| bool=get_quotes(settings.params.testingDate.start,settings.params.testingDate.end,security)
     if result==False:
         raise HTTPException(status_code=400, detail="Ошибка парсинга тестовых данных")
-    testingDate= result.history.data
+    testingDate= data_conversion(result.history.data) 
 
     neuralNetwork=NeuralNetwork()
 
-    # neuralNetwork.get_data()
-
-    return  {
-        'treningDate':treningDate[0],
-        'testingDate':testingDate[0]
-    }
+    neuralNetwork.get_data(treningDate,testingDate)
+    loss,val_loss= neuralNetwork.training()
+    return neuralNetwork.get_forecast(treningDate,testingDate)
+    # return  {
+    #     'treningDate':treningDate,
+    #     'testingDate':testingDate,
+    #     'averageError':{
+    #         'loss':loss,
+    #         'val_loss':val_loss
+    #     }
+    # }

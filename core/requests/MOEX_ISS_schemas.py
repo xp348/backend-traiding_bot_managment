@@ -36,7 +36,7 @@ class Metadata (BaseModel):
 class History(BaseModel):
     metadata:Metadata
     columns: List[ColumnsName]=[]
-    data: List[List[Union[str, float, int]]]=[]
+    data: List[List[Union[datetime, float, int]]]=[]
 
 class Quotes(BaseModel):
     history: History
