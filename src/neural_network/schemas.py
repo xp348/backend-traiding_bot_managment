@@ -28,22 +28,22 @@ class Params(BaseModel):
     loss: Loss
     optimizer: Optimizer
 
-class Lstm(BaseModel):
+class LstmClass(BaseModel):
     type: str='lstm'
     neurons: int
     input_timesteps: Optional[int]= None
     input_dim: Optional[int]= None
     return_seq: bool
 
-class Dropout(BaseModel):
+class DropoutClass(BaseModel):
     type:str='dropout'
     rate:float
 
-class Dense(BaseModel):
+class DenseClass(BaseModel):
     type:str='dense'
     neurons: int
     activation:str='linear'
 
 class Settings(BaseModel):
     params:Params
-    layers:List[Union[Lstm, Dropout, Dense]]
+    layers:List[Union[LstmClass, DropoutClass, DenseClass]]
