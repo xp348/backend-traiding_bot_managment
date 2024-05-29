@@ -1,5 +1,5 @@
 
-from datetime import  timedelta
+from datetime import  datetime, timedelta
 from typing import Annotated, Any, List
 from typing_extensions import Doc
 
@@ -28,8 +28,8 @@ router = APIRouter( prefix="/moex", tags=["MOEX"])
 @router.get("/quotes",response_model=History )
 async def read_user(
     security: str = 'SBER',
-    start_date: str = Query('2020-03-25', description="Start date for historical data (YYYY-MM-DD)"),
-    end_date: str = Query('2023-04-02', description="End date for historical data (YYYY-MM-DD)"),
+    start_date: datetime = Query('2020-03-25', description="Start date for historical data (YYYY-MM-DD)"),
+    end_date: datetime = Query('2023-04-02', description="End date for historical data (YYYY-MM-DD)"),
     
    
 )->History :
