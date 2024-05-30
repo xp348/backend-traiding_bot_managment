@@ -14,13 +14,14 @@ from numpy import newaxis
 
 from src.neural_network.schemas import DenseClass, DropoutClass, Loss, LstmClass, Optimizer, Settings
 class Data():
-	def __init__(self,Date:list[datetime]=[],Open:list[float]=[],Close:list[float]=[],High:list[float]=[],Low:list[float]=[],Volume:list[int]=[]):
-		self.Date   = Date
-		self.Open   = Open
-		self.Close  = Close
-		self.High   = High
-		self.Low    = Low
-		self.Volume = Volume
+	def __init__(self,Date:list[datetime]=None,Open:list[float]=None,Close:list[float]=None,High:list[float]=None,Low:list[float]=None,Volume:list[int]=None):
+		#Date:list[datetime]=[] писать нельзя так как эти списки будут общими для всех экзкмптяров класса
+		self.Date = Date if Date is not None else []
+		self.Open = Open if Open is not None else []
+		self.Close = Close if Close is not None else []
+		self.High = High if High is not None else []
+		self.Low = Low if Low is not None else []
+		self.Volume = Volume if Volume is not None else []
 	   
 		
 class Timer():
@@ -158,100 +159,94 @@ class NeuralNetworkModel():
 		return predicted
 
 class DataLoader():
-    """A class for loading and transforming data for the lstm model"""
+	"""A class for loading and transforming data for the lstm model"""	
+	def __init__(self):		
+		self.conn = None
+		self.cursor = None
+		self.connection_to_db = False
+		self.data_train :list[list[float]] = [] #closs volume
+		self.data_test :list[list[float]] = [] #closs volume
+		self.len_train :int = None #closs volume
+		self.len_test  :int = None #closs volume
+		self.len_train_windows = None	
 
-    def __init__(self):
-    
-        self.conn = None
-        self.cursor = None
-        self.connection_to_db = False
-        self.data_train :list[list[float]] = [] #closs volume
-        self.data_test :list[list[float]] = [] #closs volume
-        self.len_train :int = None #closs volume
-        self.len_test  :int = None #closs volume
-        self.len_train_windows = None
+	def de_normalise_predicted(self, price_1st, _data):
+		return (_data + 1) * price_1st	
+	
+	def get_last_data(self, seq_len, normalise):
+		last_data = self.data_test[seq_len:]
+		data_windows = np.array(last_data).astype(float)
+		#data_windows = np.array([data_windows])
+		#data_windows = self.normalise_windows(data_windows, single_window=False) if normalise else data_windows
+		data_windows = self.normalise_windows(data_windows, single_window=True) if normalise else data_windows
+		return data_windows	
+	
+	def get_test_data(self, seq_len, normalise):
+		'''
+		Create x, y test data windows
+		Warning: batch method, not generative, make sure you have enough memory to
+		load data, otherwise reduce size of the training split.
+		'''
+		data_windows = []
+		for i in range(self.len_test - seq_len + 1):
+			data_windows.append(self.data_test[i:i+seq_len])	
+		data_windows = np.array(data_windows).astype(float)
+		data_windows = self.normalise_windows(data_windows, single_window=False) if normalise else data_windows	
+		x = data_windows[:, :-1]
+		y = data_windows[:, -1, [0]]
+		return x,y	
 
-    
-
-    def de_normalise_predicted(self, price_1st, _data):
-        return (_data + 1) * price_1st
-
-    def get_last_data(self, seq_len, normalise):
-        last_data = self.data_test[seq_len:]
-        data_windows = np.array(last_data).astype(float)
-        #data_windows = np.array([data_windows])
-        #data_windows = self.normalise_windows(data_windows, single_window=False) if normalise else data_windows
-        data_windows = self.normalise_windows(data_windows, single_window=True) if normalise else data_windows
-        return data_windows
-
-    def get_test_data(self, seq_len, normalise):
-        '''
-        Create x, y test data windows
-        Warning: batch method, not generative, make sure you have enough memory to
-        load data, otherwise reduce size of the training split.
-        '''
-        data_windows = []
-        for i in range(self.len_test - seq_len + 1):
-            data_windows.append(self.data_test[i:i+seq_len])
-
-        data_windows = np.array(data_windows).astype(float)
-        data_windows = self.normalise_windows(data_windows, single_window=False) if normalise else data_windows
-
-        x = data_windows[:, :-1]
-        y = data_windows[:, -1, [0]]
-        return x,y
-
- 
-
-    def get_train_data(self, seq_len, normalise):
-        '''
-        Create x, y train data windows
-        Warning: batch method, not generative, make sure you have enough memory to
-        load data, otherwise use generate_training_window() method.
-        '''
-        data_x = []
-        data_y = []
-        for i in range(self.len_train - seq_len + 1):
-            x, y = self._next_window(i, seq_len, normalise)
-            # print('x', x,'y', y)
-            data_x.append(x)
-            data_y.append(y)
-        return np.array(data_x), np.array(data_y)
-
-    def generate_train_batch(self, seq_len, batch_size, normalise):
-        '''Yield a generator of training data from filename on given list of cols split for train/test'''
-        i = 0
-        while i < (self.len_train - seq_len + 1):
-            x_batch = []
-            y_batch = []
-            for b in range(batch_size):
-                if i >= (self.len_train - seq_len + 1):
-                    # stop-condition for a smaller final batch if data doesn't divide evenly
-                    yield np.array(x_batch), np.array(y_batch)
-                    i = 0
-                x, y = self._next_window(i, seq_len, normalise)
-                x_batch.append(x)
-                y_batch.append(y)
-                i += 1
-            yield np.array(x_batch), np.array(y_batch)
-
-    def _next_window(self, i, seq_len, normalise):
-        '''Generates the next data window from the given index location i'''
-        window = self.data_train[i:i+seq_len]
-        window = self.normalise_windows(window, single_window=True)[0] if normalise else window
-        x = window[:-1]
-        y = window[-1, [0]]
-        return x, y
-
-    def normalise_windows(self, window_data, single_window=False):
-        '''Normalise window with a base value of zero'''
-        normalised_data = []
-        window_data = [window_data] if single_window else window_data
-        for window in window_data:
-            normalised_window = []
-            for col_i in range(window.shape[1]):
-                normalised_col = [((float(p) / float(window[0, col_i])) - 1) for p in window[:, col_i]]
-                normalised_window.append(normalised_col)
-            normalised_window = np.array(normalised_window).T # reshape and transpose array back into original multidimensional format
-            normalised_data.append(normalised_window)
-        return np.array(normalised_data)
+	def get_train_data(self, seq_len, normalise):
+		'''
+		Create x, y train data windows
+		Warning: batch method, not generative, make sure you have enough memory to
+		load data, otherwise use generate_training_window() method.
+		'''
+		data_x = []
+		data_y = []
+		for i in range(self.len_train - seq_len + 1):
+			x, y = self._next_window(i, seq_len, normalise)
+			# print('x', x,'y', y)
+			data_x.append(x)
+			data_y.append(y)
+		return np.array(data_x), np.array(data_y)	
+	
+	def generate_train_batch(self, seq_len, batch_size, normalise):
+		'''Yield a generator of training data from filename on given list of cols split for train/test'''
+		i = 0
+		while i < (self.len_train - seq_len + 1):
+			x_batch = []
+			y_batch = []
+			for b in range(batch_size):
+				if i >= (self.len_train - seq_len + 1):
+					# stop-condition for a smaller final batch if data doesn't divide evenly
+					yield np.array(x_batch), np.array(y_batch)
+					i = 0
+				x, y = self._next_window(i, seq_len, normalise)
+				x_batch.append(x)
+				y_batch.append(y)
+				i += 1
+			yield np.array(x_batch), np.array(y_batch)	
+	def _next_window(self, i, seq_len, normalise):
+		'''Generates the next data window from the given index location i'''
+		window = self.data_train[i:i+seq_len]
+		window = self.normalise_windows(window, single_window=True)[0] if normalise else window
+		x = window[:-1]
+		y = window[-1, [0]]
+		return x, y	
+	def normalise_windows(self, window_data, single_window=False):
+		'''Normalise window with a base value of zero'''
+		normalised_data = []
+		window_data = [window_data] if single_window else window_data
+		for window in window_data:
+			normalised_window = []
+			for col_i in range(window.shape[1]):
+				base_value = float(window[0, col_i])
+				if base_value == 0:
+					# Если базовое значение равно нулю, заменяем его на небольшое значение
+					base_value = 1e-10  # или другое подходящее значение
+				normalised_col = [((float(p) / base_value) - 1) for p in window[:, col_i]]
+				normalised_window.append(normalised_col)
+			normalised_window = np.array(normalised_window).T # reshape and transpose array back into original multidimensional format
+			normalised_data.append(normalised_window)
+		return np.array(normalised_data)

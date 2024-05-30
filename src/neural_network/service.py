@@ -6,7 +6,7 @@ from core.requests.MOEX_ISS_schemas import Quotes
 
 
 def data_conversion(list:List[List[Union[datetime, float, int]]]):
-    data= Data()
+    data=  Data()
     for item in list:
         data.Date.append(item[0])
         data.Open.append(item[1])
