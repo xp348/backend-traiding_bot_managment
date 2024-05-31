@@ -172,7 +172,7 @@ async def patch_bot(settings: Settings):
         raise HTTPException(status_code=400, detail="Ошибка парсинга тестовых данных")
     xTest= np.array(testingResult.history.data)[:,1:] 
 
-    xLen = 45# 300                      #Анализируем по 300 прошедшим точкам
+    # xLen = 45# 300                      #Анализируем по 300 прошедшим точкам
     #Масштабируем данные (отдельно для X и Y), чтобы их легче было скормить сетке
     xScaler = MinMaxScaler()
     xScaler.fit(xTrain)
@@ -188,18 +188,18 @@ async def patch_bot(settings: Settings):
    
     #Создаем генератор для обучения
     trainDataGen = TimeseriesGenerator(xTrain, yTrain,           #В качестве параметров наши выборки
-                                   length=xLen, stride=1, #Для каждой точки (из промежутка длины xLen)
-                                   batch_size=20)                #Размер batch, который будем скармливать модели
+                                   length=settings.params.sequenceLength, stride=1, #Для каждой точки (из промежутка длины xLen)
+                                   batch_size=settings.params.batchSize)                #Размер batch, который будем скармливать модели
     
     #Создаем аналогичный генератор для валидации при обучении
     testDataGen = TimeseriesGenerator(xTest, yTest,
-                                   length=xLen, stride=1,
-                                   batch_size=20)
+                                   length=settings.params.sequenceLength, stride=1,
+                                   batch_size=settings.params.batchSize)
     
 
         #Создадим генератор проверочной выборки, из которой потом вытащим xVal, yVal для проверки
     DataGen = TimeseriesGenerator(xTest, yTest,
-                                   length=xLen, sampling_rate=1,
+                                   length=settings.params.sequenceLength, sampling_rate=1,
                                    batch_size=len(xTest)) #размер batch будет равен длине нашей выборки
     xVal = []
     yVal = []
@@ -212,14 +212,14 @@ async def patch_bot(settings: Settings):
 
 
     modelL = Sequential()
-    modelL.add(LSTM(5, input_shape = (xLen, 5)))
+    modelL.add(LSTM(5, input_shape = (settings.params.sequenceLength, 5)))
     modelL.add(Dense(10, activation="linear"))
     modelL.add(Dense(1, activation="linear"))
 
     modelL.compile(loss="mse", optimizer=Adam(lr=1e-5))
 
     history = modelL.fit_generator(trainDataGen,
-                        epochs=10,
+                        epochs=settings.params.numberEpochs,
                         verbose=1,
                         validation_data=testDataGen)
     
@@ -231,6 +231,7 @@ async def patch_bot(settings: Settings):
     loss=np.where(np.isnan(history.history['loss']), None, history.history['loss'])
     val_loss=np.where(np.isnan(history.history['val_loss']), None, history.history['val_loss'])
     predVal=np.where(np.isnan(predVal), None, predVal)
+    yValUnscaled=np.where(np.isnan(yValUnscaled), None, yValUnscaled)
     # predVal=np.where(np.isinf(predVal), None, predVal)
 
     return {
@@ -242,7 +243,6 @@ async def patch_bot(settings: Settings):
          'val_loss':val_loss.tolist(),
          'dataTrain':treningResult.history.data,
         'dataTest':testingResult.history.data,
-         
        'predVal':predVal.tolist(),
         'yValUnscaled':yValUnscaled.tolist()
     }
