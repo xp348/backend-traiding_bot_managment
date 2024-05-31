@@ -162,7 +162,7 @@ def getPred(currModel, xVal, yVal, yScaler):
 async def patch_bot(settings: Settings):
     security: str = 'SBER'
   
-    settings = Settings(**data)
+    # settings = Settings(**data)
     treningResult:Quotes| bool=get_quotes(settings.params.treningDate.start,settings.params.treningDate.end,security)
     if treningResult==False:
         raise HTTPException(status_code=400, detail="Ошибка парсинга данных для обучения")
@@ -228,8 +228,8 @@ async def patch_bot(settings: Settings):
     currModel = modelL
     (predVal, yValUnscaled) = getPred(currModel, xVal[0], yVal[0], yScaler)
 
-    # loss=np.where(np.isnan(history.history['loss']), None, history.history['loss'])
-    # val_loss=np.where(np.isnan(history.history['val_loss']), None, history.history['val_loss'])
+    loss=np.where(np.isnan(history.history['loss']), None, history.history['loss'])
+    val_loss=np.where(np.isnan(history.history['val_loss']), None, history.history['val_loss'])
     predVal=np.where(np.isnan(predVal), None, predVal)
     # predVal=np.where(np.isinf(predVal), None, predVal)
 
@@ -238,8 +238,8 @@ async def patch_bot(settings: Settings):
         # 'yTrain':np.where(np.isnan(yTrain), None, yTrain).tolist(),
         # 'xTest':np.where(np.isnan(xTest), None, xTest).tolist(),
         # 'yTest':np.where(np.isnan(yTest), None, yTest).tolist(),
-        # 'loss':loss,
-        #  'val_loss':val_loss,
+        'loss':loss.tolist(),
+         'val_loss':val_loss.tolist(),
          'dataTrain':treningResult.history.data,
         'dataTest':testingResult.history.data,
          
